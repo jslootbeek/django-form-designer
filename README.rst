@@ -15,6 +15,7 @@ A Django app for building many kinds of forms visually, without any programming 
   expression etc) 
 * Customizable messages and labels
 * Supports POST and GET forms
+* Signals on form render, submission, success, error.
 
 
 Installation
@@ -24,7 +25,7 @@ This install guide assumes that you are familiar with Python and Django.
 
 - Install the module using pip::
 
-    $ pip install git://github.com/philomat/django-form-designer.git#egg=django-form-designer
+    $ pip install git+git://github.com/philomat/django-form-designer.git#egg=django-form-designer
 
   **or** download it from http://github.com/philomat/django-form-designer, and run the installation 
   script::

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _, ugettext
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.contrib.admin.views.main import ChangeList
 from django.http import Http404
 
@@ -44,6 +44,7 @@ class FormLogAdmin(admin.ModelAdmin):
     list_display = ('form_no_link', 'created', 'id', 'created_by', 'data_html')
     list_filter = ('form_definition',)
     list_display_links = ()
+    date_hierarchy = 'created'
 
     exporter_classes = {}
     exporter_classes_ordered = []
@@ -83,9 +84,20 @@ class FormLogAdmin(admin.ModelAdmin):
     data_html.allow_tags = True
     data_html.short_description = _('Data')
 
-    def get_change_list_query_set(self, request):
-        cl = ChangeList(request, self.model, self.list_display, self.list_display_links, self.list_filter,
-            self.date_hierarchy, self.search_fields, self.list_select_related, self.list_per_page, self.list_max_show_all, self.list_editable, self)
+    def get_change_list_query_set(self, request, extra_context=None):
+        """
+        The 'change list' admin view for this model.
+        """
+        list_display = self.get_list_display(request)
+        list_display_links = self.get_list_display_links(request, list_display)
+        list_filter = self.get_list_filter(request)
+        ChangeList = self.get_changelist(request)
+
+        cl = ChangeList(request, self.model, list_display,
+            list_display_links, list_filter, self.date_hierarchy,
+            self.search_fields, self.list_select_related,
+            self.list_per_page, self.list_max_show_all, self.list_editable,
+            self)
         return cl.get_query_set(request)
 
     def export_view(self, request, format):

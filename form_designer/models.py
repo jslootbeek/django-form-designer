@@ -7,15 +7,26 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 from django.forms import widgets
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
-from django.contrib.auth.models import User
 from django.utils.datastructures import SortedDict
+from django.core.exceptions import ImproperlyConfigured
+
+# support for custom User models in Django 1.5+
+try:
+    from django.contrib.auth import get_user_model
+except ImportError:  # django < 1.5
+    from django.contrib.auth.models import User
+else:
+    User = get_user_model()
 
 from form_designer.fields import TemplateTextField, TemplateCharField, ModelNameField, RegexpExpressionField
 from form_designer.utils import get_class
 from form_designer import settings
 
 if settings.VALUE_PICKLEFIELD:
-    from picklefield.fields import PickledObjectField
+    try:
+        from picklefield.fields import PickledObjectField
+    except ImportError:
+        raise ImproperlyConfigured('FORM_DESIGNER_VALUE_PICKLEFIELD is True, but django-picklefield is not installed.')
 
 
 class FormValueDict(dict):
@@ -24,7 +35,7 @@ class FormValueDict(dict):
         self['value'] = value
         self['label'] = label
         super(FormValueDict, self).__init__()
-        
+
 
 class FormDefinition(models.Model):
     name = models.SlugField(_('name'), max_length=255, unique=True)
@@ -174,7 +185,7 @@ class FormDefinition(models.Model):
 class FormDefinitionField(models.Model):
 
     form_definition = models.ForeignKey(FormDefinition)
-    field_class = models.CharField(_('field class'), choices=settings.FIELD_CLASSES, max_length=32)
+    field_class = models.CharField(_('field class'), choices=settings.FIELD_CLASSES, max_length=100)
     position = models.IntegerField(_('position'), blank=True, null=True)
 
     name = models.SlugField(_('name'), max_length=255)
@@ -243,8 +254,8 @@ class FormDefinitionField(models.Model):
 
         if self.field_class == 'django.forms.DecimalField':
             args.update({
-                'max_value': Decimal(str(self.max_value)),
-                'min_value': Decimal(str(self.min_value)),
+                'max_value': Decimal(str(self.max_value)) if self.max_value != None else None,
+                'min_value': Decimal(str(self.min_value)) if self.max_value != None else None,
                 'max_digits': self.max_digits,
                 'decimal_places': self.decimal_places,
             })
