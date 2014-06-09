@@ -19,7 +19,7 @@ def friendly(value, null_value=None):
     if type(value) is bool:
         value = yesno(value, u"%s,%s" % (_('yes'), _('no')),)
     if hasattr(value, 'url'):
-        value = value.url
+        value = '<a href="%s" target="_blank">%s</a>' % (value.url, value.url,)
     if not isinstance(value, basestring):
         value = unicode(value)
     return value
