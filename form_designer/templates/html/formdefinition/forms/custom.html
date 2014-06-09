@@ -1,2 +1,35 @@
-{% create your own custom.html to override this template %}
-{% include "html/formdefinition/forms/as_p.html %} 
+{% load i18n %}
+<div id="form-designer">
+    {% if messages %}
+        <script type="text/javascript">
+            $(function() {
+                {% if not form.errors %}
+                    $("#form-designer-form").hide();
+                {% endif %}
+
+                $(document).scrollTop( $("#form-designer").offset().top );
+            });
+
+            $(document).on("click", "#show-form-designer-form", function(e){
+                e.preventDefault();
+                $("#form-designer-form").show();
+                $(".form-designer-messages").hide();
+                $(this).hide();
+            });
+
+        </script>
+        <ul class='form-designer-messages'>
+            {% for message in messages %}
+                <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+
+        {% if not form.errors %}
+            <a id="show-form-designer-form">{% trans 'Click here to fill out another form.' %}</a>
+        {% endif %}
+    {% endif %}
+
+    <div id="form-designer-form">
+        {% include "html/formdefinition/forms/as_p.html" %}
+    </div>
+</div>
