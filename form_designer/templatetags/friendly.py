@@ -6,7 +6,7 @@ from django.template.defaultfilters import yesno
 register = template.Library()
 
 # Returns a more "human-friendly" representation of value than repr()
-def friendly(value, null_value=None): 
+def friendly(value, null_value=None, return_markup=True):
     if value is None and not (null_value is None):
         return null_value
     if type(value) is QuerySet:
@@ -19,7 +19,10 @@ def friendly(value, null_value=None):
     if type(value) is bool:
         value = yesno(value, u"%s,%s" % (_('yes'), _('no')),)
     if hasattr(value, 'url'):
-        value = '<a href="%s" target="_blank">%s</a>' % (value.url, value.url,)
+        if return_markup:
+            value = '<a href="%s" target="_blank">%s</a>' % (value.url, value.url,)
+        else:
+            value = value.url
     if not isinstance(value, basestring):
         value = unicode(value)
     return value

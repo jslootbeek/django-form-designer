@@ -47,11 +47,10 @@ class FormLogExporterBase(ExporterBase):
 
         include_created = settings.CSV_EXPORT_INCLUDE_CREATED
         include_pk = settings.CSV_EXPORT_INCLUDE_PK
-        include_header = settings.CSV_EXPORT_INCLUDE_HEADER and distinct_forms == 1
+        include_header = settings.CSV_EXPORT_INCLUDE_HEADER
         include_form = settings.CSV_EXPORT_INCLUDE_FORM and distinct_forms > 1
 
         if queryset.count():
-            fields = queryset[0].form_definition.get_field_dict()
             if include_header:
                 header = []
                 if include_form:
@@ -65,8 +64,15 @@ class FormLogExporterBase(ExporterBase):
                 # Hence, use current form definition for header.
                 # for field in queryset[0].data:
                 #    header.append(field['label'] if field['label'] else field['key'])
-                for field_name, field in fields.items():
-                    header.append(field.label if field.label else field.key)
+                if distinct_forms == 1:
+                    # Each field label is a header column
+                    fields = queryset[0].form_definition.get_field_dict()
+                    for field_name, field in fields.items():
+                        header.append(field.label if field.label else field.key)
+                else:
+                    # Since multiple form types will most likely have different field labels,
+                    # just have one 'Data' header column to display all the field labels and values
+                    header.append(_('Data'))
 
                 self.writerow([smart_str(cell, encoding=settings.CSV_EXPORT_ENCODING) for cell in header])
 
@@ -79,10 +85,22 @@ class FormLogExporterBase(ExporterBase):
                 if include_pk:
                     row.append(entry.pk)
 
-                for item in entry.data:
-                    value = friendly(item['value'], null_value=settings.CSV_EXPORT_NULL_VALUE)
-                    value = smart_str(
-                        value, encoding=settings.CSV_EXPORT_ENCODING)
+
+                if distinct_forms == 1:
+                    # Pretty print all values into their own corresponding columns
+                    for item in entry.data:
+                        value = friendly(item['value'], null_value=settings.CSV_EXPORT_NULL_VALUE, return_markup=False)
+                        value = smart_str(value, encoding=settings.CSV_EXPORT_ENCODING)
+                        row.append(value)
+                else:
+                    # Pretty print all values into the 'Data' column
+                    value = u''
+                    for item in entry.data:
+                        value += item['label'] if item['label'] else item['name']
+                        value += u': ' + friendly(item['value'], null_value=settings.CSV_EXPORT_NULL_VALUE, return_markup=False)
+                        value += u'\n'
+
+                    value = smart_str(value[:len(value)-1], encoding=settings.CSV_EXPORT_ENCODING)
                     row.append(value)
 
                 self.writerow(row)
